@@ -11,11 +11,34 @@
 </head>
 <body>
   <div class="container">
-    <h1>Gemini AI Chatbot</h1>
+  <div class="navbar">
+    Gemini AI Chatbot
+  </div>
     <div id="chat-box" class="chat-box"></div>
-    <form id="chat-form">
-      <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" required />
-      <button type="submit">Send</button>
+    
+    <!-- preview attachments -->
+    <div id="preview-group" style="display: none;" class="preview-group">
+      <img id="image-preview" alt="Preview"/>
+    </div>
+
+    <!-- input -->
+    <form id="chat-form" class="chat-form">
+      <div class="file-group">
+        <label>
+          <input type="file" id="image-input" accept="image/*" hidden/>
+          <span title="Send Image">🖼️</span>
+        </label>
+        <label>
+          <input type="file" id="audio-input" accept="audio/*" hidden/>
+          <span title="Send Audio">🎵</span>
+        </label>
+        <label>
+          <input type="file" id="document-input" accept="application/pdf" hidden/>
+          <span title="Send PDF">📄</span>
+        </label>
+      </div>
+      <input type="text" id="user-input" placeholder="Send a message..." autocomplete="off"/>
+      <button type="submit">➤</button>
     </form>
   </div>
   <script src="script.js"></script>

@@ -4,6 +4,9 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
+import multer from 'multer';
+import fs from 'fs';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,6 +38,15 @@ function extractText(resp) {
   }
 }
 
+const imageToGenerativePart = (filePath) => ({
+    inlineData: {
+      data: fs.readFileSync(filePath).toString('base64'),
+      mimeType: 'image/png',
+    },
+});
+
+const upload = multer({ dest: 'public/src/uploads/' });
+
 app.post('/api/chat', async (req, res) => {
   try {
     const { messages } = req.body;
@@ -49,6 +61,96 @@ app.post('/api/chat', async (req, res) => {
     const result = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents,
+    });
+
+    res.json({
+      result: extractText(result),
+    });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/image', upload.single('image'), async (req, res) => {
+  try {
+    let { prompt } = req.body;
+    if (!req.file) throw new Error('Image is required');
+    const filePath = req.file.path;
+
+    if (!prompt) prompt = 'Describe the following image';
+
+    const result = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            imageToGenerativePart(filePath),
+          ],
+        },
+      ],
+    });
+
+    res.json({
+      result: extractText(result),
+    });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/audio', upload.single('audio'), async (req, res) => {
+  try {
+    if (!req.file) throw new Error('Audio is required');
+    const filePath = req.file.path;
+    const result = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              inlineData: {
+                data: fs.readFileSync(filePath).toString('base64'),
+                mimeType: 'audio/mpeg',
+              },
+            },
+            { text: 'Transcribe this audio' },
+          ],
+        },
+      ],
+    });
+
+    res.json({
+      result: extractText(result),
+    });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/document', upload.single('document'), async (req, res) => {
+  try {
+    if (!req.file) throw new Error('Document is required');
+    const filePath = req.file.path;
+
+    const result = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              inlineData: {
+                data: fs.readFileSync(filePath).toString('base64'),
+                mimeType: 'application/pdf',
+              },
+            },
+            { text: 'Summarize this document' },
+          ],
+        },
+      ],
     });
 
     res.json({
